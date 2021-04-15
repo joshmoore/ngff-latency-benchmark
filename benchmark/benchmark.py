@@ -1,26 +1,25 @@
+import json
 import operator
 import random
 import time
-from copy import deepcopy
 
 # for product
 from functools import reduce  # Required in Python 3
 from os import environ
 
+import fsspec
 import h5py
-import json
 import pytest
 import s3fs
 import tifffile
 import zarr
-
-import fsspec
 
 DIR = environ.get("DIR", "data")
 BASE = environ.get("BASE", "retina_large")
 NAME = environ.get("NAME", "data")
 HOST = environ.get("HOST", "localhost")
 ROUNDS = int(environ.get("ROUNDS", 10))
+SEED = int(environ.get("SEED", 0))
 S3ARGS = json.loads(environ.get("S3ARGS", "{}"))
 BUCKET = environ.get("BUCKET", "ngff-latency-benchmark")
 
@@ -29,6 +28,11 @@ fsspec_default_args = {
     "skip_instance_cache": False,
     # "use_listings_cache": False,
 }
+
+
+if SEED:
+    print(f"Setting random.seed to {SEED}")
+    random.seed(SEED)
 
 
 def prod(seq):
@@ -58,8 +62,7 @@ class ChunkChoices:
                             chunk_distance += ic * prod(shape[2:])
                             chunk_distance += iz * prod(shape[3:])
                             chunk_distance += iy * prod(shape[4:])
-                            chunks.append((chunk_index,
-                                          [chunk_distance, None]))
+                            chunks.append((chunk_index, [chunk_distance, None]))
 
         self.chunk_choices = list()
         for idx, choice in enumerate(random.sample(chunks, ROUNDS)):
@@ -127,9 +130,9 @@ class Fixture:
         raise NotImplementedError()
 
 
-
-@pytest.fixture(params=(Fixture.local, Fixture.http, Fixture.s3),
-                ids=("local", "http", "s3"))
+@pytest.fixture(
+    params=(Fixture.local, Fixture.http, Fixture.s3), ids=("local", "http", "s3")
+)
 def source(request):
     return request.param
 
@@ -213,6 +216,7 @@ def file_type(request, source):
     else:
 
         raise NotImplementedError(request.param)
+
 
 def test_benchmark(file_type, chunk_choice, record_property):
 

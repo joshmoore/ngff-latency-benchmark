@@ -6,4 +6,4 @@ docker-compose up -d
 # upload
 docker-compose run --rm upload
 # run benchmark
-docker-compose run --rm benchmark -sv
+docker-compose run --rm benchmark -svx

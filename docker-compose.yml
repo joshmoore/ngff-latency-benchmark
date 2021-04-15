@@ -63,6 +63,7 @@ services:
       - DIR
       - HOST
       - ROUNDS
+      - SEED
       - TEST_REPEATS
 
 # from:   https://docs.min.io/docs/deploy-minio-on-docker-compose.html
